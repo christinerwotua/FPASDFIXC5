@@ -46,7 +46,7 @@ public class MainGameGUI extends JFrame {
     // =====================================================================================
     // AUDIO FILE NAMES (taruh .wav di folder project / root)
     // =====================================================================================
-    private static final String BGM_FILE        = "backsound.wav";
+    private static final String BGM_FILE        = "backsoundlns.wav";
     private static final String SFX_DICE        = "dice.wav";
     private static final String SFX_WALK        = "walk.wav";      // dipakai audio.playWalkSound()
     private static final String SFX_PAWPSICLE   = "pawpsicle.wav";
