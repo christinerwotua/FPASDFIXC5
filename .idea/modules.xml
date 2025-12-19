@@ -4,7 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/FPASDFIXC6.iml" filepath="$PROJECT_DIR$/FPASDFIXC6.iml" />
       <module fileurl="file://$PROJECT_DIR$/Maze/Maze.iml" filepath="$PROJECT_DIR$/Maze/Maze.iml" />
-      <module fileurl="file://$PROJECT_DIR$/SnakeLadders/SnakeLadders.iml" filepath="$PROJECT_DIR$/SnakeLadders/SnakeLadders.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SnakeAndLadders/SnakeAndLadders.iml" filepath="$PROJECT_DIR$/SnakeAndLadders/SnakeAndLadders.iml" />
     </modules>
   </component>
 </project>
