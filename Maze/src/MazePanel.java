@@ -17,7 +17,7 @@ public class MazePanel extends JPanel {
     private String officerName, gameMode;
 
     private Image playerIcon, entryIcon, exitIcon;
-    private int playerDirection = 1;
+    private int playerDirection = 1; // 1 untuk Kanan, -1 untuk Kiri
 
     public MazePanel(int cols, int rows, JLabel costDisplay, JTextPane explanationArea, String name, String mode) {
         this.cols = cols; this.rows = rows;
@@ -26,9 +26,9 @@ public class MazePanel extends JPanel {
         this.officerName = name; this.gameMode = mode;
 
         try {
-            playerIcon = new ImageIcon(getClass().getResource("icon.png")).getImage();
-            entryIcon = new ImageIcon(getClass().getResource("entrypoint.png")).getImage();
-            exitIcon = new ImageIcon(getClass().getResource("exitpoint.png")).getImage();
+            playerIcon = new ImageIcon(getClass().getResource("/icon.png")).getImage();
+            entryIcon = new ImageIcon(getClass().getResource("/entrypoint.png")).getImage();
+            exitIcon = new ImageIcon(getClass().getResource("/exitpoint.png")).getImage();
         } catch (Exception e) { System.out.println("Aset gambar tidak lengkap!"); }
 
         setBackground(new Color(24, 28, 45));
@@ -68,24 +68,15 @@ public class MazePanel extends JPanel {
         isSolving = false;
         visitedOrder.clear();
         finalPath.clear();
-        for (Node[] r : grid) for (Node n : r) { n.visited = false; n.parent = null; }
+        for (Node[] r : grid) {
+            for (Node n : r) {
+                n.visited = false;
+                n.parent = null;
+                n.gCost = 1000000;
+            }
+        }
         updateCost();
         repaint();
-
-        if (player == endNode) {
-            Main.playWinSound(); // Panggil suara kemenangan
-
-            if(gameMode.equals("RANK MODE")) {
-                Main.missionCompleteInRank();
-            }
-
-            // Gunakan Timer agar suara sempat berbunyi sebelum pesan muncul
-            javax.swing.Timer delay = new javax.swing.Timer(200, e -> {
-                JOptionPane.showMessageDialog(this, "Mission Accomplished, Officer " + officerName + "!");
-            });
-            delay.setRepeats(false);
-            delay.start();
-        }
     }
 
     private void updateCost() {
@@ -99,8 +90,10 @@ public class MazePanel extends JPanel {
     }
 
     private void movePlayer(int dx, int dy) {
+        if (dx == 0 && dy == 0) return;
         int nx = player.x + dx;
         int ny = player.y + dy;
+
         if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && !grid[nx][ny].isWall) {
             Node nextNode = grid[nx][ny];
             if (manualPathStack.size() > 1 && nextNode == manualPathStack.get(manualPathStack.size() - 2)) {
@@ -108,67 +101,64 @@ public class MazePanel extends JPanel {
             } else {
                 manualPathStack.push(nextNode);
             }
-            player = manualPathStack.peek();
-            finalPath.clear(); isSolving = false;
+            player = nextNode;
+            finalPath.clear();
+            isSolving = false;
             updateCost();
             repaint();
-            if (player == endNode) {
-                if(gameMode.equals("Rank Mode")) Main.missionCompleteInRank();
-                JOptionPane.showMessageDialog(this, "Mission Accomplished, Officer " + officerName + "!");
-            }
+
+            if (player == endNode) triggerWin();
         }
     }
 
-    // REVISI: Selalu mulai rute dari Entry (startNode)
+    private void triggerWin() {
+        Main.playWinSound(); // Suara berhenti otomatis dalam 3 detik (diatur di Main.java)
+        if (gameMode.equals("Rank Mode")) Main.missionCompleteInRank();
+
+        javax.swing.Timer popupDelay = new javax.swing.Timer(300, e -> {
+            JOptionPane.showMessageDialog(this, "Mission Accomplished, Officer " + officerName + "!");
+        });
+        popupDelay.setRepeats(false);
+        popupDelay.start();
+    }
+
     public void solve(String mode) {
         resetSolver();
         isSolving = true;
         String desc = "";
 
-        if (mode.equals("BFS")) { runBFS(startNode); desc = "BFS (Breadth-First Search) adalah algoritma pencarian pada graf atau pohon yang menjelajahi simpul level per level, dimulai dari simpul awal, mengunjungi semua tetangga terdekatnya terlebih dahulu sebelum pindah ke level berikutnya"; }
-        else if (mode.equals("DFS")) { runDFS(startNode); desc = "Depth-First Search adalah sebuah algoritma untuk menelusuri struktur data pohon atau graf dengan menjelajahi sedalam mungkin pada satu cabang sebelum kembali (backtracking)."; }
+        if (mode.equals("BFS")) { runBFS(startNode); desc = "BFS (Breadth-First Search) adalah algoritma pencarian pada graf atau pohon yang menjelajahi level per level, dimulai dari simpul awal, mengunjungi semua tetangga terdekatnya terlebih dahulu sebelum pindah ke level berikutnya,"; }
+        else if (mode.equals("DFS")) { runDFS(startNode); desc = "Depth-First Search (DFS) adalah algoritma penelusuran atau pencarian pada struktur data pohon (tree) atau graf yang memprioritaskan kedalaman, yaitu menjelajahi sejauh mungkin ke satu cabang sebelum melakukan backtracking (mundur)"; }
         else if (mode.equals("DIJKSTRA")) { runWeightedSearch(startNode, true); desc = "Algoritma Dijkstra adalah metode untuk menemukan jalur terpendek (shortest path) dari satu simpul (node) ke semua simpul lain dalam sebuah graf berbobot (weighted graph)"; }
         else if (mode.equals("A*")) { runWeightedSearch(startNode, false); desc = "Algoritmo A* (A-Star) adalah algoritma pencarian graf yang efisien untuk menemukan jalur terpendek dari titik awal ke tujuan, sering digunakan dalam robotika dan navigasi"; }
 
         if (explanationArea != null) explanationArea.setText("\n" + desc);
         updateCost();
         repaint();
+
+        if (!finalPath.isEmpty()) triggerWin();
     }
 
     private void runWeightedSearch(Node start, boolean isDijkstra) {
-        // PriorityQueue sekarang akan otomatis menggunakan compareTo dari kelas Node
         PriorityQueue<Node> pq = new PriorityQueue<>();
-
-        // Reset semua gCost sebelum mulai
-        for (Node[] row : grid) {
-            for (Node n : row) {
-                n.gCost = 1000000;
-                n.visited = false;
-                n.parent = null;
-            }
-        }
-
         start.gCost = 0;
         pq.add(start);
 
         while (!pq.isEmpty()) {
             Node curr = pq.poll();
-
             if (curr.visited) continue;
             curr.visited = true;
             visitedOrder.add(curr);
-
             if (curr == endNode) break;
 
-            for (Node neighbor : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)) {
-                // Jika Dijkstra, hCost = 0. Jika A*, hCost = Jarak udara (Manhattan)
-                int hCost = isDijkstra ? 0 : (Math.abs(neighbor.x - endNode.x) + Math.abs(neighbor.y - endNode.y));
-                int tentativeGScore = curr.gCost + neighbor.weight + hCost;
-
-                if (tentativeGScore < neighbor.gCost) {
-                    neighbor.parent = curr;
-                    neighbor.gCost = tentativeGScore;
-                    pq.add(neighbor);
+            for (Node m : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)) {
+                int h = isDijkstra ? 0 : (Math.abs(m.x - endNode.x) + Math.abs(m.y - endNode.y));
+                int tentativeG = curr.gCost + m.weight + 1;
+                if (tentativeG < m.gCost) {
+                    m.gCost = tentativeG;
+                    m.parent = curr;
+                    // Note: gCost di Node digunakan PriorityQueue untuk sorting
+                    pq.add(m);
                 }
             }
         }
@@ -178,11 +168,11 @@ public class MazePanel extends JPanel {
     private void runBFS(Node start) {
         Queue<Node> q = new LinkedList<>();
         q.add(start); start.visited = true;
-        while(!q.isEmpty()){
+        while (!q.isEmpty()) {
             Node curr = q.poll(); visitedOrder.add(curr);
-            if(curr == endNode) break;
-            for(Node m : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)){
-                if(!m.visited){ m.visited = true; m.parent = curr; q.add(m); }
+            if (curr == endNode) break;
+            for (Node m : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)) {
+                if (!m.visited) { m.visited = true; m.parent = curr; q.add(m); }
             }
         }
         buildPath();
@@ -191,21 +181,25 @@ public class MazePanel extends JPanel {
     private void runDFS(Node start) {
         Stack<Node> s = new Stack<>();
         s.push(start);
-        while(!s.isEmpty()){
+        while (!s.isEmpty()) {
             Node curr = s.pop();
-            if(curr.visited) continue;
+            if (curr.visited) continue;
             curr.visited = true; visitedOrder.add(curr);
-            if(curr == endNode) break;
-            for(Node m : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)){
-                if(!m.visited){ m.parent = curr; s.push(m); }
+            if (curr == endNode) break;
+            for (Node m : MazeLogic.getPassageNeighbors(curr, grid, cols, rows)) {
+                if (!m.visited) { m.parent = curr; s.push(m); }
             }
         }
         buildPath();
     }
 
-    private void buildPath() { Node t = endNode; while(t != null && t != startNode){ finalPath.add(t); t = t.parent; } }
-    private int getG(Node n, Node start) { int g = 0; Node t = n; while(t != null && t != start) { g += t.weight; t = t.parent; } return g; }
-    private int getH(Node n) { return Math.abs(n.x - endNode.x) + Math.abs(n.y - endNode.y); }
+    private void buildPath() {
+        Node t = endNode;
+        while (t != null && t != startNode) {
+            finalPath.add(t);
+            t = t.parent;
+        }
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -227,16 +221,17 @@ public class MazePanel extends JPanel {
                     else if (n.type.equals("Grass")) g2.setColor(Node.COLOR_GRASS);
                     else g2.setColor(Node.COLOR_PATH);
                 }
+
                 if (finalPath.contains(n)) g2.setColor(new Color(241, 196, 15));
                 g2.fillRect(x, y, tileSize, tileSize);
-                g2.setColor(new Color(0,0,0,50)); g2.drawRect(x, y, tileSize, tileSize);
+                g2.setColor(new Color(0, 0, 0, 50));
+                g2.drawRect(x, y, tileSize, tileSize);
 
                 if (n == startNode && entryIcon != null) g2.drawImage(entryIcon, x, y, tileSize, tileSize, this);
                 if (n == player && playerIcon != null) {
                     if (playerDirection == 1) g2.drawImage(playerIcon, x, y, tileSize, tileSize, this);
                     else g2.drawImage(playerIcon, x + tileSize, y, -tileSize, tileSize, this);
-                }
-                else if (n == endNode && exitIcon != null) g2.drawImage(exitIcon, x, y, tileSize, tileSize, this);
+                } else if (n == endNode && exitIcon != null) g2.drawImage(exitIcon, x, y, tileSize, tileSize, this);
             }
         }
     }

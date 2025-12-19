@@ -7,7 +7,6 @@ import javax.sound.sampled.*;
 import java.io.BufferedInputStream;
 import java.net.URL;
 
-// --- PANEL ROUNDED & TRANSPARAN (DASHBOARD LOOK) ---
 class RoundedTransparentPanel extends JPanel {
     private int radius;
     public RoundedTransparentPanel(int radius) {
@@ -25,7 +24,6 @@ class RoundedTransparentPanel extends JPanel {
     }
 }
 
-// --- PANEL BACKGROUND (CENTER-CROP LOGIC) ---
 class BackgroundPanel extends JPanel {
     private Image bgImage;
     private int alpha;
@@ -49,7 +47,6 @@ class BackgroundPanel extends JPanel {
     }
 }
 
-// --- TOMBOL MODERN DENGAN HOVER EFFECT ---
 class RoundedButton extends JButton {
     private Color normalColor = new Color(135, 54, 30);
     private Color hoverColor = new Color(185, 74, 40);
@@ -125,19 +122,18 @@ public class Main {
     }
 
     private static void showWelcomingPage() {
-        // Overlay background lebih tipis (140) agar gambar asli lebih cerah
         BackgroundPanel welcome = new BackgroundPanel("welcomingpageImage.jpg", 140);
         welcome.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- WRAPPER BOX (Untuk efek Dashboard) ---
+
         RoundedTransparentPanel glassBox = new RoundedTransparentPanel(40);
         glassBox.setPreferredSize(new Dimension(650, 450));
         glassBox.setLayout(new GridBagLayout());
         GridBagConstraints boxGbc = new GridBagConstraints();
         boxGbc.insets = new Insets(10, 20, 10, 20);
 
-        // JUDUL DENGAN SHADOW 3D
+
         JLabel title = new JLabel("ZOOTOPIA CASE SOLVER") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -155,7 +151,6 @@ public class Main {
         boxGbc.insets = new Insets(0, 0, 40, 0);
         glassBox.add(title, boxGbc);
 
-        // FORM FIELDS
         boxGbc.gridwidth = 1; boxGbc.insets = new Insets(10, 10, 10, 10);
 
         JLabel nl = new JLabel("OFFICER NAME:");
@@ -180,7 +175,7 @@ public class Main {
         boxGbc.gridx = 1; boxGbc.anchor = GridBagConstraints.WEST;
         glassBox.add(modeBox, boxGbc);
 
-        // START BUTTON
+        // button utk pindah ke halaman maze
         RoundedButton start = new RoundedButton("START MISSION");
         start.setPreferredSize(new Dimension(250, 50));
         start.addActionListener(e -> {
@@ -193,7 +188,6 @@ public class Main {
         boxGbc.insets = new Insets(40, 0, 0, 0);
         glassBox.add(start, boxGbc);
 
-        // Menambahkan glassBox ke center layar
         welcome.add(glassBox);
         container.add(welcome, "WELCOME");
         cardLayout.show(container, "WELCOME");
@@ -225,6 +219,7 @@ public class Main {
         if(currentMode.equals("Rank Mode")) startTimer();
     }
 
+    // membuat sidebar di halaman maze
     private static JPanel createSidebar(MazePanel maze) {
         BackgroundPanel sidebar = new BackgroundPanel("backgroundImage.jpg", 200);
         sidebar.setPreferredSize(new Dimension(380, 0));
@@ -332,14 +327,39 @@ public class Main {
 
     public static void playWinSound() {
         try {
-            URL url = Main.class.getResource("/win.wav"); // Pastikan file format .wav
-            if (url == null) return;
+            URL url = Main.class.getResource("/win.wav");
+            if (url == null) {
+                System.out.println("File win.wav tidak ditemukan!");
+                return;
+            }
+
             AudioInputStream ais = AudioSystem.getAudioInputStream(new BufferedInputStream(url.openStream()));
             Clip winClip = AudioSystem.getClip();
             winClip.open(ais);
-            winClip.start(); // Putar sekali saja, tidak perlu looping
+
+            // Kecilkan backsound agar tidak tabrakan
+            if (backgroundMusic != null && backgroundMusic.isRunning()) {
+                backgroundMusic.stop();
+            }
+
+            winClip.start();
+
+            // TIMER: Berhenti otomatis setelah 3 detik
+            javax.swing.Timer stopTimer = new javax.swing.Timer(3000, e -> {
+                if (winClip.isRunning()) winClip.stop();
+                winClip.close(); // Tutup resource agar tidak berat
+
+                // Nyalakan kembali backsound jika tidak di-mute
+                if (!isMuted && backgroundMusic != null) {
+                    backgroundMusic.start();
+                    backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
+                }
+            });
+            stopTimer.setRepeats(false);
+            stopTimer.start();
+
         } catch (Exception e) {
-            System.out.println("Gagal memutar suara kemenangan!");
+            e.printStackTrace();
         }
     }
 }

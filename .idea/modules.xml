@@ -2,10 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/FPASDFIXC6.iml" filepath="$PROJECT_DIR$/FPASDFIXC6.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FPASDFIXC5.iml" filepath="$PROJECT_DIR$/FPASDFIXC5.iml" />
       <module fileurl="file://$PROJECT_DIR$/Maze/Maze.iml" filepath="$PROJECT_DIR$/Maze/Maze.iml" />
       <module fileurl="file://$PROJECT_DIR$/SnakeAndLadders/SnakeAndLadders.iml" filepath="$PROJECT_DIR$/SnakeAndLadders/SnakeAndLadders.iml" />
-      <module fileurl="file://$PROJECT_DIR$/SnakenLadders/SnakenLadders.iml" filepath="$PROJECT_DIR$/SnakenLadders/SnakenLadders.iml" />
     </modules>
   </component>
 </project>

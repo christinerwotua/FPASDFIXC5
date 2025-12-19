@@ -1,6 +1,5 @@
 import java.awt.Color;
 
-// TAMBAHKAN 'implements Comparable' di sini
 public class Node implements Comparable<Node> {
     public int x, y, weight;
     public String type;
@@ -8,7 +7,7 @@ public class Node implements Comparable<Node> {
     public boolean visited = false;
     public Node parent;
 
-    // Variabel pembantu untuk algoritma (g: biaya jalan, h: estimasi)
+    // Var pembantu utk si dijkstra
     public int gCost = 1000000;
 
     public static final Color COLOR_WALL = new Color(34, 47, 91);
@@ -26,7 +25,7 @@ public class Node implements Comparable<Node> {
         else { type = "Terrace"; weight = 0; }
     }
 
-    // WAJIB ADA: Memberitahu Java cara membandingkan dua Node
+
     @Override
     public int compareTo(Node other) {
         return Integer.compare(this.gCost, other.gCost);

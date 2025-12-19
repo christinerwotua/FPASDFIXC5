@@ -1,6 +1,7 @@
 import java.util.*;
 
 public class MazeLogic {
+    // prim algorithm code
     public static void generatePrim(Node[][] grid, int cols, int rows) {
         List<Node> walls = new ArrayList<>();
         Node start = grid[1][1];
